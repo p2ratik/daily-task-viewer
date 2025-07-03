@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Task Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .task-form {
+      max-width: 600px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .task-form input[type="number"],
+    .task-form input[type="text"] {
+      width: 90%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .task-entry {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      margin-top: 20px;
+    }
+
+    .result p {
+      background: #e6f7ff;
+      padding: 10px;
+      border-left: 4px solid #1890ff;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Daily Task Tracker</h1>
+
+  <div class="task-form">
+    <label for="numTasks">How many tasks?</label><br>
+    <input type="number" id="numTasks" min="1" /><br>
+    <button onclick="generateForm()">Create Form</button>
+
+    <form id="taskContainer" action="/"></form>
+     <!-- <form id ="taskContainer" method="POST" action="/"></form> -->
+
+    <div class="result" id="taskResults"></div>
+  </div>
+
+<script>
+function generateForm() {
+  const taskContainer = document.getElementById('taskContainer');
+  const num = parseInt(document.getElementById('numTasks').value);
+  taskContainer.innerHTML = '';
+
+  if (isNaN(num) || num <= 0) {
+    alert('Please enter a valid number');
+    return;
+  }
+
+  for (let i = 1; i <= num; i++) {
+    taskContainer.innerHTML += `
+      <div class="task-entry">
+        <label>Task ${i} Name:</label><br>
+        <input type="text" name="taskName${i}" required><br>
+        <label>Hours Spent:</label><br>
+        <input type="number" name="taskHours${i}" min="0" required><br>
+      </div>
+    `;
+  }
+
+  taskContainer.innerHTML += `<button type="submit">Submit Tasks</button>`;
+  
+  // Attach submit handler
+  taskContainer.onsubmit = handleSubmit;
+}
+
+function handleSubmit(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const formData = new FormData(form);
+  const jsonData = {};
+
+  for (let [key, value] of formData.entries()) {
+    jsonData[key] = value;
+  }
+
+  fetch('/submit-tasks', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById('taskResults').innerHTML = `<h3>${data.message}</h3>
+    <img src="${data.chart_url}" alt="Pie Chart" style="max-width: 100%; margin-top: 20px;" />`
+    ;
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+</script>
+</body>
+</html>
